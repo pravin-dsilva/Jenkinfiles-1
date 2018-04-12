@@ -1,0 +1,31 @@
+properties([parameters([text(defaultValue: '''
+ppcrh7522''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 8 * * 3''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        timeout(120) {
+            node(label) {
+                stage('Prepare ' + label) {
+                    git branch: 'master', url: 'https://github.com/apache/falcon.git'
+                    sh "git apply /var/lib/jenkins/.m2/repository/patches/falcon/*.patch"
+                }
+                stage('Compile ' + label) {
+                    sh "mvn clean install -DskipTests"
+                }
+                stage('Test ' + label) {
+                    try {
+                        sh "mvn test -fn"
+                    } finally {
+                        junit '**/target/surefire-reports/TEST-*.xml'
+                        archive '**/target/*.jar'
+                    }
+                }
+            }
+        }
+    }
+}
+parallel builders
