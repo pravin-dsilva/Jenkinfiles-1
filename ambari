@@ -12,7 +12,11 @@ for (x in labels) {
             }
             stage('Compile ' + label) {
                 sh '''
-                    mvn clean install -DskipTests
+                    mvn clean
+                    mkdir -p /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/
+                    cp /var/lib/jenkins/.m2/repository/patches/ambari/hbase-2.0.0.3.0.0.0-1181-bin.tar.gz /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/hbase.tar.gz
+                    cp /var/lib/jenkins/.m2/repository/patches/ambari/phoenix-5.0.0.3.0.0.0-1181.tar.gz /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/phoenix.tar.gz
+                    mvn install -DskipTests
                 '''
             }
             stage('Test ' + label) {
