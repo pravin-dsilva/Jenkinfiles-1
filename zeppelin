@@ -1,0 +1,36 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 8 * * 5''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        timeout(180) {
+            node(label) {
+                stage('Prepare ' + label) {
+                    git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
+                    sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*"
+                }
+                stage('Compile ' + label) {
+                    sh '''
+                        export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                        mvn clean install -DskipTests -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip
+                    '''
+                }
+                stage('Test ' + label) {
+                    try {
+                        sh '''
+                            export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                            mvn verify -fn -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip -Djava.io.tmpdir=/tmp
+                        '''
+                    } finally {
+                        junit '**/target/surefire-reports/TEST-*.xml'
+                        archive '**/target/*.jar'
+                    }
+                }
+            }
+        }
+    }
+}
+parallel builders

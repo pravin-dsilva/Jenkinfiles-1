@@ -1,0 +1,32 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 9 * * 5''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            environment {
+                JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
+            }
+            stage('Prepare ' + label) {
+                git branch: 'master', url: 'https://github.com/apache/zookeeper.git'
+            }
+            stage('Compile ' + label) {
+                sh "ant -keep-going clean compile"
+            }
+            stage('Test ' + label) {
+                try {
+                    sh "ant -Dtest.junit.output.format=xml -keep-going clean compile test-core-java"
+                }  catch (Exception err) {
+                    currentBuild.result = 'UNSTABLE'
+                } finally {
+                    junit 'build/test/logs/*.xml'
+                    archive 'build/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders

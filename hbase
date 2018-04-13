@@ -1,0 +1,27 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 20 * * 4''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            stage('Prepare ' + label) {
+                git branch: 'master', url: 'https://github.com/apache/hbase.git'
+            }
+            stage('Compile ' + label) {
+                sh "mvn clean install -DskipTests"
+            }
+            stage('Test ' + label) {
+                try {
+                    sh "mvn test -fn"
+                } finally {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archive '**/target/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders

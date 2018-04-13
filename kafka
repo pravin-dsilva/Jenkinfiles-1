@@ -1,0 +1,44 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 0 * * 5''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            environment {
+                MAVEN_OPTS          =   '-Xmx2g -XX:ReservedCodeCacheSize=512m -XX:PermSize=1024m -XX:MaxPermSize=1024m'
+                //JAVA_TOOL_OPTIONS   =   '-Dos.arch=ppc64le'
+            }
+            stage('Prepare ' + label) {
+                git branch: 'trunk', url: 'https://github.com/apache/kafka.git'
+                sh '''
+                    if [ "ppc64le" = `uname -p` ]
+                    then
+                        git apply /var/lib/jenkins/.m2/repository/patches/kafka/power*.patch
+                    fi
+                '''
+            }
+            stage('Compile ' + label) {
+                // bootstrap and download the wrapper
+                sh "gradle"
+                // Building a binary release gzipped tar ball
+                sh "./gradlew clean releaseTarGz -x signArchives"
+                // Installing the jars to the local Maven repository
+                sh "./gradlew installAll"
+            }
+            stage('Test ' + label) {
+                try {
+                    sh "./gradlew --no-daemon -PmaxParallelForks=1 -PtestLoggingEvents=started,passed,skipped,failed -PxmlFindBugsReport=true clean test -PscalaVersion=2.12 --continue -Dcheckstyle.config.path=`pwd`"
+                } catch (Exception err) {
+                    currentBuild.result = 'UNSTABLE'
+                } finally {
+                    junit '**/build/test-results/test/*.xml'
+                    archive '**/build/libs/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders

@@ -1,0 +1,24 @@
+def labels = ['ppcrh752']
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            stage('Prepare ' + label) {
+                git branch: 'master', url: 'https://github.com/apache/metron.git'
+            }
+            stage('Compile ' + label) {
+                sh "mvn clean install -DskipTests"
+            }
+            stage('Test ' + label) {
+                try {
+                    sh "mvn test -fn"
+                } finally {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archive '**/target/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders

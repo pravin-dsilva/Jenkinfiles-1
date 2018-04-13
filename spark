@@ -1,0 +1,31 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 0 * * 4''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            stage('Prepare ' + label) {
+                git branch: 'master', url: 'https://github.com/apache/spark.git'
+            }
+            stage('Compile ' + label) {
+                sh "mvn clean install -DskipTests -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr"
+            }
+            stage('Test ' + label) {
+                try {
+                    sh '''
+                        export MAVEN_OPTS='-Xmx5g -Xms128m -XX:MaxPermSize=512m'
+                        export JAVA_TOOL_OPTIONS='-Xmx5g -XX:MaxPermSize=512m -Xms128m'
+                        mvn clean install -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr -fn
+                    '''
+                } finally {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archive '**/target/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders

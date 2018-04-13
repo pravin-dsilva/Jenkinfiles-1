@@ -1,0 +1,27 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 7 * * 5''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            environment {
+                JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
+            }
+            stage('Prepare ' + label) {
+                git branch: 'trunk', url: 'https://github.com/apache/sqoop.git'
+            }
+            stage('Build ' + label) {
+                try {
+                    sh "ant -Dtest.junit.output.format=xml clean package test"
+                } finally {
+                    junit '**/build/test/*.xml'
+                    archive 'build/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders
