@@ -1,0 +1,33 @@
+properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+H 6 * * 3''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+
+def labels = nodelabels.split("\\r?\\n")
+def builders = [:]
+for (x in labels) {
+    def label = x
+    builders[label] = {
+        node(label) {
+            stage('Prepare ' + label) {
+                checkout([$class: 'GitSCM', branches: [[name: 'trunk']], userRemoteConfigs: [[url: 'https://github.com/apache/ambari/']]])
+            }
+            stage('Compile ' + label) {
+                sh '''
+                    mvn clean
+                    mkdir -p /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/
+                    cp /var/lib/jenkins/.m2/repository/patches/ambari/hbase-2.0.0.3.0.0.2-97-bin.tar.gz /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/hbase.tar.gz
+                    cp /var/lib/jenkins/.m2/repository/patches/ambari/phoenix-5.0.0.3.0.0.2-97.tar.gz /var/lib/jenkins/workspace/ambari/ambari-metrics/ambari-metrics-timelineservice/target/embedded/phoenix.tar.gz
+                    mvn install -DskipTests
+                '''
+            }
+            stage('Test ' + label) {
+                try {
+                    sh "mvn test -fn"
+                } finally {
+                    junit '**/target/surefire-reports/TEST-*.xml'
+                    archive '**/target/*.jar'
+                }
+            }
+        }
+    }
+}
+parallel builders
