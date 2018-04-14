@@ -7,18 +7,21 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
-            environment {
-                PATH = '/usr/bin:$PATH:/opt/phantomjs-1/bin/'
-            }
             stage('Prepare ' + label) {
                 git branch: 'master', url: 'https://github.com/apache/tez.git'
             }
             stage('Compile ' + label) {
-                sh "mvn clean install -DskipTests -Dtar"
+                sh '''
+                    export PATH='/usr/bin:$PATH:/opt/phantomjs-1/bin/'
+                    mvn clean install -DskipTests -Dtar
+                ''''
             }
             stage('Test ' + label) {
                 try {
-                    sh "mvn test -fn"
+                    sh '''
+                        export PATH='/usr/bin:$PATH:/opt/phantomjs-1/bin/'
+                        mvn test -fn
+                    '''
                 } finally {
                     junit '**/target/surefire-reports/TEST-*.xml'
                     archive 'target/*.jar'
