@@ -14,7 +14,7 @@ for (x in labels) {
                 sh '''
                     export PATH='/usr/bin:$PATH:/opt/phantomjs-1/bin/'
                     mvn clean install -DskipTests -Dtar
-                ''''
+                '''
             }
             stage('Test ' + label) {
                 try {
