@@ -15,6 +15,7 @@ for (x in labels) {
                 stage('Compile ' + label) {
                     sh '''
                         export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                        export LD_LIBRARY_PATH='/usr/local/lib/'
                         mvn clean install -DskipTests -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip
                     '''
                 }
@@ -22,6 +23,7 @@ for (x in labels) {
                     try {
                         sh '''
                             export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                            export LD_LIBRARY_PATH='/usr/local/lib/'
                             mvn verify -fn -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip -Djava.io.tmpdir=/tmp
                         '''
                     } finally {
