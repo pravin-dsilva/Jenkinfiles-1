@@ -8,7 +8,7 @@ for (x in labels) {
     builders[label] = {
         node(label) {
             environment {
-                PATH = '$PATH:/opt/phantomjs-1/bin/'
+                PATH = '/usr/bin:$PATH:/opt/phantomjs-1/bin/'
             }
             stage('Prepare ' + label) {
                 git branch: 'master', url: 'https://github.com/apache/tez.git'
