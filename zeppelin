@@ -6,7 +6,7 @@ def builders = [:]
 for (x in labels) {
     def label = x
     builders[label] = {
-        timeout(180) {
+        timeout(600) {
             node(label) {
                 stage('Prepare ' + label) {
                     git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
