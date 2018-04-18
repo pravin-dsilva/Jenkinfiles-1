@@ -18,7 +18,7 @@ for (x in labels) {
                 try {
                     sh '''
                         export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
-                        /opt/maven/bin/mvn test -fn
+                        mvn test -fn
                     '''
                 } finally {
                     junit '**/target/surefire-reports/TEST-*.xml'
