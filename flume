@@ -9,6 +9,7 @@ for (x in labels) {
         node(label) {
             stage('Prepare ' + label) {
                 git branch: 'trunk', url: 'https://github.com/apache/flume.git'
+                sh "git apply /var/lib/jenkins/.m2/repository/patches/flume/*"
             }
             stage('Compile ' + label) {
                 sh "mvn clean install -DskipTests"
