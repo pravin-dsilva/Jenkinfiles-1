@@ -16,6 +16,8 @@ for (x in labels) {
             stage('Build ' + label) {
                 try {
                     sh "ant -Dtest.junit.output.format=xml clean package test"
+                } catch (Exception err) {
+                        currentBuild.result = 'UNSTABLE'
                 } finally {
                     junit '**/build/test/*.xml'
                     archive 'build/*.jar'
