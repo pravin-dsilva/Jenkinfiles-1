@@ -1,6 +1,9 @@
 properties([parameters([text(defaultValue: '''x86ub16
+x86ub18
 x86rh7
+x86rh75
 ppcub16
+ppcub18
 ppcrh7
 ppcrh75''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
 H 7 * * 1''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
@@ -22,10 +25,8 @@ for (x in labels) {
     }
 }
 def runStages(label) {
-    stage('Prepare ' + label) {
-        git branch: 'master', url: 'https://github.com/apache/metron.git'
-    }
     stage('Compile ' + label) {
+        git branch: 'master', url: 'https://github.com/apache/metron.git'
         sh "mvn clean install -DskipTests"
     }
     stage('Test ' + label) {
