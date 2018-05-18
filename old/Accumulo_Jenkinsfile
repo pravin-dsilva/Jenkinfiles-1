@@ -1,0 +1,43 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository") {
+    //def mvnHome
+    stage('Preparation') { // for display purposes
+        //sh 'which mvn'
+        //sh 'pwd'
+        //sh 'hostname'
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/accumulo.git'
+        // Get the Maven tool.
+        // ** NOTE: This 'M3' Maven tool must be configured
+        // **       in the global configuration.
+        //mvnHome = tool 'M3'
+    }
+    stage('Compile') {
+        // Run the maven build
+        sh '''
+            if [ "ppc64le" = `uname -p` ]
+                then
+                    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-ppc64el/
+                else
+                    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+            fi
+            /opt/maven/bin/mvn clean install -DskipTests
+        '''
+    }
+    stage('Test') {
+        // Run the maven tests
+        try {
+            sh '''
+                if [ "ppc64le" = `uname -p` ]
+                then
+                    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-ppc64el/
+                else
+                    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+                fi
+                /opt/maven/bin/mvn test -fn
+            '''
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

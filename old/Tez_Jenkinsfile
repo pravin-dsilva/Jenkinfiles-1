@@ -1,0 +1,23 @@
+
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.cache:/var/lib/jenkins/.cache:rw,z -v /var/lib/jenkins/.gradle:/var/lib/jenkins/.gradle:rw,z") {
+    environment {
+        PATH    =   '$PATH:/opt/phantomjs-1/bin/'
+    }
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/tez.git'
+    }
+    stage('Compile') {
+        // Run the maven build without test
+        sh "/opt/maven/bin/mvn clean install -DskipTests -Dtar"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn install -fn"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive 'target/*.jar'
+        }
+    }
+}

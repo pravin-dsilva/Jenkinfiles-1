@@ -1,0 +1,20 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
+        sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*"
+    }
+    stage('Compile') {
+        // Run the maven build without test
+        sh "/opt/maven/bin/mvn clean install -DskipTests -Pspark-2.0  -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn verify -fn -Pspark-2.0  -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

@@ -1,0 +1,28 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    environment {
+        MAVEN_OPTS='-Xmx1500m -Xms1500m -XX:MaxPermSize=256m -Dfile.encoding=UTF-8'
+    }
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/atlas.git'
+        sh '''
+            if [ "ppc64le" = `uname -p` ]
+            then
+                git apply /var/lib/jenkins/.m2/repository/patches/atlas/power*.patch
+            fi
+        '''
+    }
+    stage('Compile') {
+        // Run the maven build without test
+        sh "/opt/maven/bin/mvn clean install -DskipTests"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn test -fn"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

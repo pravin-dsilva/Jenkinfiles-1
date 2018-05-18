@@ -1,4 +1,11 @@
-properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+properties([parameters([text(defaultValue: '''x86ub16
+x86ub18
+x86rh7
+x86rh75
+ppcub16
+ppcub18
+ppcrh7
+ppcrh75''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
 H 0 * * 4''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
 
 def labels = nodelabels.split("\\r?\\n")
@@ -7,24 +14,35 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
-            stage('Prepare ' + label) {
-                git branch: 'master', url: 'https://github.com/apache/spark.git'
-            }
-            stage('Compile ' + label) {
-                sh "mvn clean install -DskipTests -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr"
-            }
-            stage('Test ' + label) {
-                try {
-                    sh '''
-                        export MAVEN_OPTS='-Xmx5g -Xms128m -XX:MaxPermSize=512m'
-                        export JAVA_TOOL_OPTIONS='-Xmx5g -XX:MaxPermSize=512m -Xms128m'
-                        mvn clean install -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr -fn
-                    '''
-                } finally {
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archive '**/target/*.jar'
+            if (label == 'ppcrh75') {
+                runStages(label)
+            } else {
+                docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+                    runStages(label)
                 }
             }
+        }
+    }
+}
+def runStages(label) {
+    stage('Compile ' + label) {
+        git branch: 'master', url: 'https://github.com/apache/spark.git'
+        sh '''
+            export _JAVA_OPTIONS='-XX:+UseConcMarkSweepGC'
+            mvn clean install -DskipTests -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr
+        '''
+    }
+    stage('Test ' + label) {
+        try {
+            sh '''
+                export MAVEN_OPTS='-Xmx5g -Xms128m -XX:MaxPermSize=512m'
+                export _JAVA_OPTIONS='-XX:+UseConcMarkSweepGC'
+                export JAVA_TOOL_OPTIONS='-Xmx5g -XX:MaxPermSize=512m -Xms128m'
+                mvn clean install -Phadoop-2.7 -Phive -Phive-thriftserver -Pyarn,sparkr -fn
+            '''
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
         }
     }
 }

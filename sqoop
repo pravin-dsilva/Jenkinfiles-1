@@ -1,4 +1,11 @@
-properties([parameters([text(defaultValue: '''ppcrh752''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
+properties([parameters([text(defaultValue: '''x86ub16
+x86ub18
+x86rh7
+x86rh75
+ppcub16
+ppcub18
+ppcrh7
+ppcrh75''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
 H 7 * * 5''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
 
 def labels = nodelabels.split("\\r?\\n")
@@ -7,22 +14,31 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
-            environment {
-                JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
-            }
-            stage('Prepare ' + label) {
-                git branch: 'trunk', url: 'https://github.com/apache/sqoop.git'
-            }
-            stage('Build ' + label) {
-                try {
-                    sh "ant -Dtest.junit.output.format=xml clean package test"
-                } catch (Exception err) {
-                        currentBuild.result = 'UNSTABLE'
-                } finally {
-                    junit '**/build/test/*.xml'
-                    archive 'build/*.jar'
+            if (label == 'ppcrh75') {
+                runStages(label)
+            } else {
+                docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+                    runStages(label)
                 }
             }
+        }
+    }
+}
+def runStages(label) {
+    environment {
+        JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
+    }
+    stage('Prepare ' + label) {
+        git branch: 'trunk', url: 'https://github.com/apache/sqoop.git'
+    }
+    stage('Build ' + label) {
+        try {
+            sh "ant -Dtest.junit.output.format=xml clean package test"
+        } catch (Exception err) {
+            currentBuild.result = 'UNSTABLE'
+        } finally {
+            junit '**/build/test/*.xml'
+            archive 'build/*.jar'
         }
     }
 }

@@ -1,0 +1,24 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    environment {
+        JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
+    }
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/zookeeper.git'
+    }
+    stage('Compile') {
+        sh "ant -keep-going clean compile"
+    }
+    stage('Test') {
+        // Run the ant build with test
+        try {
+            sh "ant -Dtest.junit.output.format=xml -keep-going clean compile test-core-java"
+        } catch (Exception err) {
+            currentBuild.result = 'UNSTABLE'
+        } finally {
+            echo "RESULT: ${currentBuild.result}"
+            junit 'build/test/logs/*.xml'
+            archive 'build/*.jar'
+        }
+    }
+}

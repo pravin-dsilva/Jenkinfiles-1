@@ -1,0 +1,17 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    stage('Preparation') {
+        git branch: 'master', url: 'https://github.com/apache/metron.git'
+    }
+    stage('Compile') {
+        sh "/opt/maven/bin/mvn clean install -DskipTests"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn package -fn"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

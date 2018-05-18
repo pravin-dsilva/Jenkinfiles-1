@@ -1,0 +1,20 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'master', url: 'https://github.com/apache/hive.git'
+        //sh 'if [ "ppc64le" = `uname -p` ]; then git apply /var/lib/jenkins/.m2/repository/patches/hive/power*.patch; fi'
+    }
+    stage('Compile') {
+        // Run the maven build without test
+        sh "/opt/maven/bin/mvn clean install -DskipTests"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn install -fn"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

@@ -1,0 +1,25 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    environment {
+        PATH        =   '$PATH:/var/lib/jenkins/phantomjs-1/bin'
+        MAVEN_OPTS  =   '-Xmx4g -Xms128m -XX:ReservedCodeCacheSize=512m -XX:PermSize=1024m -XX:MaxPermSize=2048m'
+        //JAVA_TOOL_OPTIONS   =   '-Dos.arch=ppc64le'
+    }
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'trunk', url: 'https://github.com/apache/hadoop.git'
+        sh 'if [ "ppc64le" = `uname -p` ]; then git apply /var/lib/jenkins/.m2/repository/patches/hadoop/power*.patch; fi'
+    }
+    stage('Compile') {
+        // Run the maven build without test
+        sh "/opt/maven/bin/mvn clean install -Pdist,native -Drequire.libwebhdfs -Drequire.snappy -Drequire.openssl -Drequire.fuse -Drequire.test.libhadoop -Pyarn-ui -DskipTests"
+    }
+    stage('Test') {
+        // Run the maven build with test
+        try {
+            sh "/opt/maven/bin/mvn test -fn -Ptest-patch -Pparallel-tests -Pshelltest -Pdist,native -Drequire.libwebhdfs -Drequire.snappy -Drequire.openssl -Drequire.fuse -Drequire.test.libhadoop -Pyarn-ui"
+        } finally {
+            junit '**/target/surefire-reports/TEST-*.xml'
+            archive '**/target/*.jar'
+        }
+    }
+}

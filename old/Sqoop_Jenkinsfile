@@ -1,0 +1,18 @@
+docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+    environment {
+        JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
+    }
+    stage('Preparation') {
+        // Get some code from a GitHub repository
+        git branch: 'trunk', url: 'https://github.com/apache/sqoop.git'
+    }
+    stage('Build') {
+        // Run the ant build with test
+        try {
+            sh "ant -Dtest.junit.output.format=xml clean package test"
+        } finally {
+            junit '**/build/test/*.xml'
+            archive 'build/*.jar'
+        }
+    }
+}
