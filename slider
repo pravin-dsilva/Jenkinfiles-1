@@ -31,7 +31,10 @@ def runStages(label) {
     }
     stage('Test ' + label) {
         try {
-            sh "mvn test -fn"
+            sh '''
+                export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                mvn test -fn
+            '''
         } finally {
             junit '**/target/surefire-reports/TEST-*.xml'
             archive '**/target/*.jar'
