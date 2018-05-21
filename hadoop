@@ -6,7 +6,7 @@ ppcub16
 ppcub18
 ppcrh7
 ppcrh75''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
-H 21 * * 1''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
+H 19 * * 1''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
 
 def labels = nodelabels.split("\\r?\\n")
 def builders = [:]
