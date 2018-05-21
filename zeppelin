@@ -29,7 +29,7 @@ for (x in labels) {
 def runStages(label) {
     stage('Compile ' + label) {
         git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
-        sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*"
+        sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*.patch"
         sh '''
             export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
             mvn clean install -DskipTests -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip -Dcheckstyle.skip
