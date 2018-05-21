@@ -32,7 +32,10 @@ def runStages(label) {
     }
     stage('Test ' + label) {
         try {
-            sh "ant clean piggybank jar compile-test test-commit -Dtest.junit.output.format=xml"
+            sh '''
+                export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
+                ant clean piggybank jar compile-test test-commit -Dtest.junit.output.format=xml
+            '''
         } catch (Exception err) {
             currentBuild.result = 'UNSTABLE'
         } finally {
