@@ -41,7 +41,6 @@ def runStages(label) {
                 export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
                 export LANG="en_US.UTF-8"
                 export LC_ALL="en_US.UTF-8"
-                cd /var/lib/jenkins/.m2/repository/patches/zeppelin/;./ipython_sparkr_dependecy.sh;cd -;
                 mvn verify -fn -Pspark-2.0 -Phadoop-2.7 -Dhadoop.version=2.7.1 -Drat.skip -Djava.io.tmpdir=/tmp -Dcheckstyle.skip
             '''
         } finally {
