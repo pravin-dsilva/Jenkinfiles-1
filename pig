@@ -27,6 +27,7 @@ for (x in labels) {
 def runStages(label) {
     stage('Compile ' + label) {
         git branch: 'trunk', url: 'https://github.com/apache/pig.git'
+        sh "git apply /var/lib/jenkins/.m2/repository/patches/pig/*.patch"
         sh "ant clean jar piggybank"
     }
     stage('Test ' + label) {
