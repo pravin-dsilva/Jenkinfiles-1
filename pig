@@ -14,7 +14,7 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
-            if (label == 'ppcrh75') {
+            iif (label.contains('host')) {
                 runStages(label)
             } else {
                 docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.ivy2:/var/lib/jenkins/.ivy2:rw,z") {

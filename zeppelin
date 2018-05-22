@@ -15,7 +15,7 @@ for (x in labels) {
     builders[label] = {
         timeout(600) {
             node(label) {
-                if (label == 'ppcrh75') {
+                if (label.contains('host')) {
                     runStages(label)
                 } else {
                     docker.image('base:v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.cache:/var/lib/jenkins/.cache:rw,z") {
