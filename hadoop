@@ -27,12 +27,7 @@ for (x in labels) {
 def runStages(label) {
     stage('Compile ' + label) {
         git branch: 'trunk', url: 'https://github.com/apache/hadoop'
-        sh '''
-            if [ "ppc64le" = `uname -p` ]
-            then
-                git apply /var/lib/jenkins/.m2/repository/patches/hadoop/power*.patch
-            fi
-        '''
+        sh "git apply /var/lib/jenkins/.m2/repository/patches/hadoop/*.patch"
         sh '''
             export FINDBUGS_HOME='/opt/findbugs'
             export _JAVA_OPTIONS='-Xmx6g'
