@@ -1,6 +1,9 @@
 properties([disableConcurrentBuilds(),  parameters([text(defaultValue: '''x86ub16
+x86ub18
 x86rh7
+x86rh75
 ppcub16
+ppcub18
 ppcrh7
 ppcrh75''', description: '', name: 'nodelabels')]), pipelineTriggers([cron('''TZ=Asia/Kolkata
 H 21 * * 1''')]), buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '15')),])
