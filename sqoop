@@ -34,6 +34,20 @@ def runStages(label) {
     stage('Build ' + label) {
         try {
             sh "ant -Dtest.junit.output.format=xml clean package test"
+            sh '''
+            echo 'Editing for OOM issue in jenkins..'
+            for i in `find -iname TEST-*.xml -exec du -sh {} + | awk '{print $1}' | grep M`
+            do
+            echo $i
+                file=`find -iname TEST-*.xml -exec du -sh {} + | grep $i | awk '{print $2}'`
+                sed -i -e '/<system-out>/,/<\\/system-out>/{
+                    /<\\/system-out>/i\
+                    <system-out>contents replaced by custom script please contact Yussuf<\\/system-out>
+                    d
+                }' $file
+            done
+            echo 'Done Editing for OOM issue in jenkins..'
+            '''
         } catch (Exception err) {
             currentBuild.result = 'UNSTABLE'
         } finally {
