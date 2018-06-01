@@ -38,11 +38,14 @@ def runStages(label) {
                 do
                 echo $i
                     file=`find -iname TEST-*.xml -exec du -sh {} + | grep $i | awk '{print $2}'`
-                    sed -i -e '/<system-out>/,/<\\/system-out>/{
-                        /<\\/system-out>/i\
-                        <system-out>contents replaced by custom script please contact yussuf<\\/system-out>
-                        d
-                    }' $file
+                    if [ -z "$file" ]
+                    then
+                        sed -i -e '/<system-out>/,/<\\/system-out>/{
+                            /<\\/system-out>/i\
+                            <system-out>contents replaced by custom script please contact yussuf<\\/system-out>
+                            d
+                        }' $file
+                    fi
                 done
                 echo 'Done Editing for OOM issue in jenkins..'
             '''
