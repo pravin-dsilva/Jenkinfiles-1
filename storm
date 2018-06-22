@@ -31,7 +31,7 @@ def runStages(label) {
     }
     stage('Test ' + label) {
         try {
-            sh "mvn test -fn"
+            sh "mvn test -fn '-P!include-shaded-deps'"
         } finally {
             junit '**/target/surefire-reports/TEST-*.xml'
             archive '**/target/*.jar'
