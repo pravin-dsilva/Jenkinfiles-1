@@ -27,6 +27,7 @@ for (x in labels) {
 def runStages(label) {
     stage('Compile ' + label) {
         git branch: 'master', url: 'https://github.com/apache/knox.git'
+        sh "git checkout -f"
         sh "mvn clean install -DskipTests"
     }
     stage('Test ' + label) {
