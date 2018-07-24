@@ -31,6 +31,8 @@ def runStages(label) {
         git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
         sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*.patch"
         sh '''
+            mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=3.3.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/bin/protoc
+            mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=2.5.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/local/bin/protoc
             export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'
             mvn clean install -DskipTests -Pspark-2.0 -Phadoop-2.7 -Drat.skip -Dcheckstyle.skip
         '''
