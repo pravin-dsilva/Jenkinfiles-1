@@ -26,6 +26,10 @@ for (x in labels) {
 }
 def runStages(label) {
     stage('Compile ' + label) {
+        if (label.contains('ppc')) {
+            sh "mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=3.3.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/bin/protoc"
+            sh "mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=2.5.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/local/bin/protoc"
+        }
         git branch: 'master', url: 'https://github.com/apache/hbase.git'
         sh "mvn clean install -DskipTests"
     }
