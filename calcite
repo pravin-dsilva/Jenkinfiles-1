@@ -26,6 +26,8 @@ for (x in labels) {
 }
 def runStages(label) {
     stage('Compile ' + label) {
+        sh "arch"
+        sh "cat /etc/os-release"
         git branch: 'master', url: 'https://github.com/apache/calcite.git'
         sh "git checkout -f"
         sh "mvn clean install -DskipTests"
