@@ -15,10 +15,10 @@ for (x in labels) {
     builders[label] = {
         timeout(120) {
             node(label) {
+                sh "hostname -f"
                 if (label.contains('host')) {
                     runStages(label)
                 } else {
-                    sh "hostname -f"
                     docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
                         runStages(label)
                     }
