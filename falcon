@@ -18,7 +18,8 @@ for (x in labels) {
                 if (label.contains('host')) {
                     runStages(label)
                 } else {
-                    docker.image(label+':v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+                    sh "hostname -f"
+                    docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
                         runStages(label)
                     }
                 }
@@ -28,7 +29,9 @@ for (x in labels) {
 }
 def runStages(label) {
     stage('Compile ' + label) {
+        sh "uname -a && lsb_release -a"
         git branch: 'master', url: 'https://github.com/apache/falcon.git'
+        sh "git clean -fxd"
         sh "git apply /var/lib/jenkins/.m2/repository/patches/falcon/*.patch"
         sh "mvn clean install -DskipTests"
     }
