@@ -14,10 +14,11 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
+            sh "hostname -f"
             if (label.contains('host')) {
                 runStages(label)
             } else {
-                docker.image(label+':v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+                docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
                     runStages(label)
                 }
             }
@@ -31,6 +32,8 @@ def runStages(label) {
     stage('Compile ' + label) {
         git branch: 'master', url: 'https://github.com/apache/atlas.git'
         sh '''
+            uname -a && lsb_release -a
+            git clean -fxd
             if [ "ppc64le" = `uname -p` ]
             then
                 git apply /var/lib/jenkins/.m2/repository/patches/atlas/power*.patch

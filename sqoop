@@ -14,10 +14,11 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
+            sh "hostname -f"
             if (label.contains('host')) {
                 runStages(label)
             } else {
-                docker.image(label+':v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
+                docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z") {
                     runStages(label)
                 }
             }
@@ -29,7 +30,9 @@ def runStages(label) {
         JAVA_TOOL_OPTIONS = "-Xmx4G -XX:MaxPermSize=4G -Xms1G"
     }
     stage('Prepare ' + label) {
+        sh "uname -a && lsb_release -a"
         git branch: 'trunk', url: 'https://github.com/apache/sqoop.git'
+        sh "git clean -fxd"
     }
     stage('Build ' + label) {
         try {

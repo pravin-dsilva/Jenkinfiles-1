@@ -15,10 +15,11 @@ for (x in labels) {
     builders[label] = {
         timeout(600) {
             node(label) {
+                sh "hostname -f"
                 if (label.contains('host')) {
                     runStages(label)
                 } else {
-                    docker.image(label+':v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.cache:/var/lib/jenkins/.cache:rw,z") {
+                    docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.cache:/var/lib/jenkins/.cache:rw,z") {
                         runStages(label)
                     }
                 }
@@ -28,11 +29,13 @@ for (x in labels) {
 }
 def runStages(label) {
     stage('Compile ' + label) {
+        sh "uname -a && lsb_release -a"
         if (label.contains('ppc')) {
             sh "mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=3.3.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/bin/protoc"
             sh "mvn install:install-file -DgroupId=com.google.protobuf -DartifactId=protoc -Dversion=2.5.0 -Dclassifier=linux-ppcle_64 -Dpackaging=exe -Dfile=/usr/local/bin/protoc"
         }
         git branch: 'master', url: 'https://github.com/apache/zeppelin.git'
+        sh "git clean -fxd"
         sh "git apply /var/lib/jenkins/.m2/repository/patches/zeppelin/*.patch"
         sh '''
             export JAVA_HOME='/usr/lib/jvm/java-1.8.0-openjdk/'

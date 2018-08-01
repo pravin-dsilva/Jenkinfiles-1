@@ -14,10 +14,11 @@ for (x in labels) {
     def label = x
     builders[label] = {
         node(label) {
+            sh "hostname -f"
             if (label.contains('host')) {
                 runStages(label)
             } else {
-                docker.image(label+':v1').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.ivy2:/var/lib/jenkins/.ivy2:rw,z") {
+                docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.ivy2:/var/lib/jenkins/.ivy2:rw,z") {
                     runStages(label)
                 }
             }
@@ -26,7 +27,9 @@ for (x in labels) {
 }
 def runStages(label) {
     stage('Compile ' + label) {
+        sh "uname -a && lsb_release -a"
         git branch: 'trunk', url: 'https://github.com/apache/pig.git'
+        sh "git clean -fxd"
         sh "git apply /var/lib/jenkins/.m2/repository/patches/pig/*.patch"
         sh "ant clean jar piggybank"
     }
