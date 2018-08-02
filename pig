@@ -18,7 +18,7 @@ for (x in labels) {
             if (label.contains('host')) {
                 runStages(label)
             } else {
-                docker.image(label+':v2').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.ivy2:/var/lib/jenkins/.ivy2:rw,z") {
+                docker.image(label+':v3').inside("-v /var/lib/jenkins/.m2/repository:/var/lib/jenkins/.m2/repository:rw,z -v /var/lib/jenkins/.ivy2:/var/lib/jenkins/.ivy2:rw,z") {
                     runStages(label)
                 }
             }
