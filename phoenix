@@ -34,7 +34,7 @@ def runStages(label) {
     }
     stage('Test ' + label) {
         try {
-            sh "/opt/maven/bin/mvn test -fn -Dtest.junit.output.format=xml"
+            sh "mvn test -fn -Dtest.junit.output.format=xml"
         } finally {
             junit '**/target/surefire-reports/TEST-*.xml'
             archive '**/target/*.jar'
